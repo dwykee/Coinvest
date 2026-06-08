@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use App\Models\Wallet;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 
@@ -126,6 +127,93 @@ class PortfolioController extends Controller
             $totalPortfolioCost += $totalCost;
         }
 
+        // Keep symbol keys so we can merge wallet balances
+        $activeHoldings = collect($activeHoldings)->keyBy('symbol')->all();
+
+        // ── Merge saldo dari wallet hasil import Moralis ──
+        $wallets = Wallet::where('user_id', Auth::id())->get();
+        foreach ($wallets as $wallet) {
+            $hasBalances = false;
+            $balancesArray = $wallet->balances;
+
+            // Antisipasi jika data balances masih berbentuk string JSON raw
+            if (is_string($balancesArray)) {
+                $balancesArray = json_decode($balancesArray, true);
+            }
+
+            foreach (($balancesArray ?? []) as $bal) {
+                $symbol = strtoupper($bal['symbol'] ?? $bal['token_symbol'] ?? '');
+                
+                // Mengakomodasi key 'amount' atau 'balance' bawaan API Moralis
+                $amount = (float) ($bal['amount'] ?? $bal['balance'] ?? 0);
+                if ($symbol === '' || $amount <= 0) continue;
+
+                $hasBalances = true;
+                $usdValue = (float) ($bal['usd_value'] ?? $bal['value'] ?? 0);
+                $price    = $amount > 0 && $usdValue > 0 ? $usdValue / $amount : ($livePrices[$symbol]['price'] ?? 0.0);
+                if ($usdValue <= 0) $usdValue = $amount * $price;
+
+                if (isset($activeHoldings[$symbol])) {
+                    $h = $activeHoldings[$symbol];
+                    $h['quantity']      += $amount;
+                    $h['current_value'] += $usdValue;
+                    $h['total_cost']    += $usdValue; 
+                    $h['current_price']  = $price ?: $h['current_price'];
+                    $h['pnl']            = $h['current_value'] - $h['total_cost'];
+                    $h['pnl_percent']    = $h['total_cost'] > 0 ? ($h['pnl'] / $h['total_cost']) * 100 : 0.0;
+                    $h['avg_buy_price']  = $h['quantity'] > 0 ? ($h['total_cost'] / $h['quantity']) : 0.0;
+                    $activeHoldings[$symbol] = $h;
+                } else {
+                    $activeHoldings[$symbol] = [
+                        'symbol' => $symbol, 
+                        'name' => $bal['name'] ?? $symbol,
+                        'quantity' => $amount, 
+                        'avg_buy_price' => $price, 
+                        'current_price' => $price,
+                        'price_change_24h' => $livePrices[$symbol]['change'] ?? 0.0,
+                        'current_value' => $usdValue, 
+                        'total_cost' => $usdValue,
+                        'pnl' => 0.0, 
+                        'pnl_percent' => 0.0,
+                    ];
+                }
+                $totalPortfolioValue += $usdValue;
+                $totalPortfolioCost  += $usdValue;
+            }
+
+            // ── HARDCODE FALLBACK ──
+            if (!$hasBalances && $wallet->total_value > 0) {
+                $symbol = 'ETH'; 
+                $usdValue = (float) $wallet->total_value;
+                $price = $livePrices[$symbol]['price'] ?? 3850.00;
+                $amount = $usdValue / $price;
+
+                if (isset($activeHoldings[$symbol])) {
+                    $activeHoldings[$symbol]['quantity']      += $amount;
+                    $activeHoldings[$symbol]['current_value'] += $usdValue;
+                    $activeHoldings[$symbol]['total_cost']    += $usdValue;
+                } else {
+                    $activeHoldings[$symbol] = [
+                        'symbol' => $symbol, 
+                        'name' => 'Ethereum (On-Chain Assets)',
+                        'quantity' => $amount, 
+                        'avg_buy_price' => $price, 
+                        'current_price' => $price,
+                        'price_change_24h' => $livePrices[$symbol]['change'] ?? 0.0,
+                        'current_value' => $usdValue, 
+                        'total_cost' => $usdValue,
+                        'pnl' => 0.0, 
+                        'pnl_percent' => 0.0,
+                    ];
+                }
+                $totalPortfolioValue += $usdValue;
+                $totalPortfolioCost  += $usdValue;
+            }
+        }
+
+        // Reset to index 
+        $activeHoldings = array_values($activeHoldings);
+
         $netPnL = $totalPortfolioValue - $totalPortfolioCost;
         $netPnLPercent = $totalPortfolioCost > 0 ? ($netPnL / $totalPortfolioCost) * 100 : 0.0;
 
@@ -174,7 +262,6 @@ class PortfolioController extends Controller
         $symbol = strtoupper($validated['asset_symbol']);
         $assetName = isset($livePrices[$symbol]) ? $livePrices[$symbol]['name'] : $symbol;
 
-        // Check if selling more than owned
         if ($validated['type'] === 'sell') {
             $currentQuantity = Auth::user()->transactions()
                 ->where('asset_symbol', $symbol)
@@ -213,7 +300,6 @@ class PortfolioController extends Controller
             abort(403);
         }
 
-        // Optional safety: check if deleting this transaction results in negative holding
         if ($transaction->type === 'buy') {
             $symbol = $transaction->asset_symbol;
             $netQtyAfterDeletion = Auth::user()->transactions()
@@ -226,13 +312,12 @@ class PortfolioController extends Controller
 
             if ($netQtyAfterDeletion < 0) {
                 return back()->withErrors([
-                    'error' => "Tidak dapat menghapus transaksi pembelian ini karena akan mengakibatkan jumlah kepemilikan aset {$symbol} menjadi negatif (karena ada transaksi penjualan setelahnya).",
+                    'error' => "Tidak dapat menghapus transaksi pembelian ini karena akan mengakibatkan jumlah kepemilikan aset {$symbol} menjadi negatif.",
                 ]);
             }
         }
 
         $transaction->delete();
-
         return redirect()->back()->with('success', 'Transaksi berhasil dihapus.');
     }
 
@@ -259,8 +344,6 @@ class PortfolioController extends Controller
         $realizedGains = 0.0;
         $unrealizedGains = 0.0;
         
-        // Compute holdings and realized gains using basic FIFO-like or average cost matching
-        // Let's use average cost method to compute realized PnL
         foreach ($transactions as $tx) {
             $symbol = $tx->asset_symbol;
             if (!isset($holdings[$symbol])) {
@@ -274,16 +357,13 @@ class PortfolioController extends Controller
                 $holdings[$symbol]['quantity'] += $tx->quantity;
                 $holdings[$symbol]['total_cost'] += $tx->total_usd;
             } else if ($tx->type === 'sell') {
-                // Average cost per unit before sale
                 $avgCostBeforeSale = $holdings[$symbol]['quantity'] > 0 
                     ? ($holdings[$symbol]['total_cost'] / $holdings[$symbol]['quantity']) 
                     : 0.0;
                 
-                // Sale profit/loss: (sale price per unit - average cost per unit) * sale quantity
                 $saleProfit = ($tx->price_usd - $avgCostBeforeSale) * $tx->quantity;
                 $realizedGains += $saleProfit;
 
-                // Deduct from holdings
                 $holdings[$symbol]['quantity'] -= $tx->quantity;
                 $holdings[$symbol]['total_cost'] = $holdings[$symbol]['quantity'] * $avgCostBeforeSale;
             }
@@ -312,7 +392,6 @@ class PortfolioController extends Controller
             $totalPortfolioValue += $currentValue;
         }
 
-        // Mock exchange distribution for visual reporting
         $exchangeDistribution = [
             'Binance' => $totalPortfolioValue * 0.55,
             'Coinbase' => $totalPortfolioValue * 0.25,

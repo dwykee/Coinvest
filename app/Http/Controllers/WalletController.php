@@ -46,6 +46,7 @@ class WalletController extends Controller
         ]);
 
         $totalValue   = 0.0;
+        $balances     = [];
         $syncedAt     = null;
         $syncError    = null;
 
@@ -58,6 +59,7 @@ class WalletController extends Controller
 
             if ($result['success']) {
                 $totalValue = $result['total_usd'];
+                $balances   = $result['balances'] ?? [];
                 $syncedAt   = now();
             } else {
                 $syncError = $result['error'];
@@ -73,6 +75,7 @@ class WalletController extends Controller
             'provider'       => $request->provider,
             'type'           => $request->type,
             'address'        => $request->address,
+            'balances'       => $balances,
             'api_key'        => $request->api_key,
             'api_secret'     => $request->api_secret
                                     ? encrypt($request->api_secret)
@@ -105,6 +108,7 @@ class WalletController extends Controller
             if ($result['success']) {
                 $wallet->update([
                     'total_value'    => $result['total_usd'],
+                    'balances'       => $result['balances'] ?? [],
                     'last_synced_at' => now(),
                 ]);
                 return redirect()->route('wallets.index')

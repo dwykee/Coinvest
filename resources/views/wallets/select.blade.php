@@ -21,7 +21,6 @@
     }
     .back-link:hover { color: #f5f3f7; }
 
-    /* Search bar */
     .add-search-wrap {
         position: relative;
         margin-bottom: 32px;
@@ -54,7 +53,6 @@
         background: rgba(139,92,246,0.02);
     }
 
-    /* Section label */
     .section-label {
         font-size: 10px;
         font-weight: 700;
@@ -64,7 +62,6 @@
         margin-bottom: 14px;
     }
 
-    /* Grid */
     .wallet-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -75,7 +72,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         padding: 22px 12px 18px;
         background: rgba(18,17,24,0.5);
         border: 1px solid rgba(255,255,255,0.06);
@@ -109,30 +106,42 @@
         background: #8b5cf6;
         align-items: center;
         justify-content: center;
+        z-index: 10;
     }
     .wallet-option.selected .check-mark { display: flex; }
 
-    /* Icon — solid colored square, no border clutter */
     .opt-logo {
-        width: 52px;
-        height: 52px;
-        border-radius: 14px;
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 15px;
+        flex-shrink: 0;
+        overflow: hidden;
+        background: transparent;
+    }
+    .opt-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 12px;
+    }
+    
+    .opt-fallback {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
         font-weight: 800;
         font-family: 'Sora', sans-serif;
         color: #fff;
-        flex-shrink: 0;
+        border-radius: 12px;
         letter-spacing: -0.5px;
     }
-    .opt-logo img {
-        width: 32px;
-        height: 32px;
-        object-fit: contain;
-        filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
-    }
+
     .opt-name {
         font-size: 13px;
         font-weight: 700;
@@ -153,9 +162,9 @@
         color: #fff;
         padding: 2px 6px;
         border-radius: 5px;
+        z-index: 10;
     }
 
-    /* Form panel */
     .add-form-panel {
         background: rgba(18,17,24,0.7);
         border: 1px solid rgba(255,255,255,0.07);
@@ -236,7 +245,6 @@
         Import your wallet address or connect a CEX with your API key.
     </p>
 
-    <!-- Search -->
     <div class="add-search-wrap">
         <span class="material-symbols-outlined add-search-icon">search</span>
         <input type="text" class="add-search-input" id="optionSearch"
@@ -247,35 +255,50 @@
     @php
     $popular = [
         ['name' => 'MetaMask',     'type' => 'wallet',   'bg' => '#E2761B', 'icon' => 'MM',
-         'logo' => 'https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg'],
+         'logo' => 'https://assets.coingecko.com/coins/images/28373/large/metamask.png'],
         ['name' => 'Trust Wallet', 'type' => 'wallet',   'bg' => '#3375BB', 'icon' => 'TW',
-         'logo' => null],
-        ['name' => 'Binance',      'type' => 'exchange', 'bg' => '#1a1a2e', 'icon' => null,
-         'logo' => 'https://cdn.jsdelivr.net/gh/nicehash/nhqm-frontend@latest/src/img/pools/binance.svg'],
-        ['name' => 'Indodax',      'type' => 'exchange', 'bg' => '#1A5FFF', 'icon' => 'IDX', 'logo' => null],
-        ['name' => 'Coinbase',     'type' => 'exchange', 'bg' => '#0052FF', 'icon' => null,
-         'logo' => 'https://upload.wikimedia.org/wikipedia/commons/1/1a/24px-Coinbase.svg'],
-        ['name' => 'KuCoin',       'type' => 'exchange', 'bg' => '#1BAA8B', 'icon' => 'KC',  'logo' => null],
-        ['name' => 'Kraken',       'type' => 'exchange', 'bg' => '#5741D9', 'icon' => 'KR',  'logo' => null],
-        ['name' => 'Tokocrypto',   'type' => 'exchange', 'bg' => '#0A1628', 'icon' => 'TC',  'logo' => null],
+         'logo' => 'https://assets.coingecko.com/coins/images/4758/large/trust_wallet.png'],
+        ['name' => 'Binance',      'type' => 'exchange', 'bg' => '#1a1a2e', 'icon' => 'BN',
+         'logo' => 'https://assets.coingecko.com/markets/images/52/large/binance.png'],
+        ['name' => 'Indodax',      'type' => 'exchange', 'bg' => '#1A5FFF', 'icon' => 'IDX', 
+         'logo' => 'https://assets.coingecko.com/markets/images/63/large/indodax.png'],
+        ['name' => 'Coinbase',     'type' => 'exchange', 'bg' => '#0052FF', 'icon' => 'CB',
+         'logo' => 'https://assets.coingecko.com/markets/images/23/large/Coinbase_Coin_Primary.png'],
+        ['name' => 'KuCoin',       'type' => 'exchange', 'bg' => '#1BAA8B', 'icon' => 'KC',  
+         'logo' => 'https://assets.coingecko.com/markets/images/61/large/kucoin.png'],
+        ['name' => 'Kraken',       'type' => 'exchange', 'bg' => '#5741D9', 'icon' => 'KR',  
+         'logo' => 'https://assets.coingecko.com/markets/images/29/large/kraken.png'],
+        ['name' => 'Tokocrypto',   'type' => 'exchange', 'bg' => '#0A1628', 'icon' => 'TC',  
+         'logo' => 'https://assets.coingecko.com/coins/images/11079/large/Tokocrypto_Token_Logo.png'],
     ];
     $all = [
-        ['name' => 'Bybit',          'type' => 'exchange', 'bg' => '#F7A600', 'icon' => 'BY', 'logo' => null],
-        ['name' => 'OKX',            'type' => 'exchange', 'bg' => '#222',    'icon' => 'OK', 'logo' => null],
-        ['name' => 'Gate.io',        'type' => 'exchange', 'bg' => '#2354E6', 'icon' => 'GT', 'logo' => null],
-        ['name' => 'Bitget',         'type' => 'exchange', 'bg' => '#00C6CF', 'icon' => 'BG', 'logo' => null],
-        ['name' => 'Gemini',         'type' => 'exchange', 'bg' => '#05B8B8', 'icon' => 'GM', 'logo' => null],
-        ['name' => 'Phantom',        'type' => 'wallet',   'bg' => '#4E44CE', 'icon' => 'PH', 'logo' => null],
-        ['name' => 'Ethereum',       'type' => 'wallet',   'bg' => '#627EEA', 'icon' => 'ETH','logo' => null],
-        ['name' => 'Bitcoin',        'type' => 'wallet',   'bg' => '#F7931A', 'icon' => 'BTC','logo' => null],
-        ['name' => 'Solana',         'type' => 'wallet',   'bg' => '#9945FF', 'icon' => 'SOL','logo' => null],
-        ['name' => 'Polygon',        'type' => 'wallet',   'bg' => '#8247E5', 'icon' => 'POL','logo' => null],
-        ['name' => 'BNB Chain',      'type' => 'wallet',   'bg' => '#F0B90B', 'icon' => 'BNB','logo' => null],
-        ['name' => 'Pindodax',       'type' => 'exchange', 'bg' => '#0073FF', 'icon' => 'PD', 'logo' => null, 'new' => true],
+        ['name' => 'Bybit',          'type' => 'exchange', 'bg' => '#F7A600', 'icon' => 'BY', 
+         'logo' => 'https://assets.coingecko.com/markets/images/698/large/bybit_spot.png'],
+        ['name' => 'OKX',            'type' => 'exchange', 'bg' => '#222',    'icon' => 'OK', 
+         'logo' => 'https://assets.coingecko.com/markets/images/424/large/okx.png'],
+        ['name' => 'Gate.io',        'type' => 'exchange', 'bg' => '#2354E6', 'icon' => 'GT', 
+         'logo' => 'https://assets.coingecko.com/markets/images/60/large/gate_io.png'],
+        ['name' => 'Bitget',         'type' => 'exchange', 'bg' => '#00C6CF', 'icon' => 'BG', 
+         'logo' => 'https://assets.coingecko.com/markets/images/540/large/bitget_2x.png'],
+        ['name' => 'Gemini',         'type' => 'exchange', 'bg' => '#05B8B8', 'icon' => 'GM', 
+         'logo' => 'https://assets.coingecko.com/markets/images/50/large/gemini.png'],
+        ['name' => 'Phantom',        'type' => 'wallet',   'bg' => '#4E44CE', 'icon' => 'PH', 
+         'logo' => 'https://assets.coingecko.com/coins/images/33054/large/phantom.png'],
+        ['name' => 'Ethereum',       'type' => 'wallet',   'bg' => '#627EEA', 'icon' => 'ETH',
+         'logo' => 'https://assets.coingecko.com/coins/images/279/large/ethereum.png'],
+        ['name' => 'Bitcoin',        'type' => 'wallet',   'bg' => '#F7931A', 'icon' => 'BTC',
+         'logo' => 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png'],
+        ['name' => 'Solana',         'type' => 'wallet',   'bg' => '#9945FF', 'icon' => 'SOL',
+         'logo' => 'https://assets.coingecko.com/coins/images/4128/large/solana.png'],
+        ['name' => 'Polygon',        'type' => 'wallet',   'bg' => '#8247E5', 'icon' => 'POL',
+         'logo' => 'https://assets.coingecko.com/coins/images/4713/large/polygon.png'],
+        ['name' => 'BNB Chain',      'type' => 'wallet',   'bg' => '#F0B90B', 'icon' => 'BNB',
+         'logo' => 'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png'],
+        ['name' => 'Pindodax',       'type' => 'exchange', 'bg' => '#0073FF', 'icon' => 'PD', 
+         'logo' => 'https://assets.coingecko.com/markets/images/63/large/indodax.png', 'new' => true],
     ];
     @endphp
 
-    <!-- Popular -->
     <div id="popularSection">
         <div class="section-label">Popular</div>
         <div class="wallet-grid" id="popularGrid">
@@ -286,13 +309,17 @@
                 <div class="check-mark">
                     <span class="material-symbols-outlined" style="font-size:11px;color:white;">check</span>
                 </div>
-                <div class="opt-logo" style="background:{{ $item['bg'] }};">
+                <div class="opt-logo">
                     @if(!empty($item['logo']))
-                        <img src="{{ $item['logo'] }}" alt="{{ $item['name'] }}"
+                        <img src="https://images.weserv.nl/?url={{ urlencode($item['logo']) }}" alt="{{ $item['name'] }}" referrerpolicy="no-referrer"
                              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                        <span style="display:none;">{{ $item['icon'] ?? substr($item['name'],0,2) }}</span>
+                        <div class="opt-fallback" style="background:{{ $item['bg'] }}; display:none;">
+                            {{ $item['icon'] ?? strtoupper(substr($item['name'],0,2)) }}
+                        </div>
                     @else
-                        {{ $item['icon'] ?? strtoupper(substr($item['name'],0,2)) }}
+                        <div class="opt-fallback" style="background:{{ $item['bg'] }};">
+                            {{ $item['icon'] ?? strtoupper(substr($item['name'],0,2)) }}
+                        </div>
                     @endif
                 </div>
                 <div class="opt-name">{{ $item['name'] }}</div>
@@ -301,7 +328,6 @@
         </div>
     </div>
 
-    <!-- All -->
     <div id="allSection">
         <div class="section-label">All</div>
         <div class="wallet-grid" id="allGrid">
@@ -315,8 +341,18 @@
                 <div class="check-mark">
                     <span class="material-symbols-outlined" style="font-size:11px;color:white;">check</span>
                 </div>
-                <div class="opt-logo" style="background:{{ $item['bg'] }};">
-                    {{ $item['icon'] ?? strtoupper(substr($item['name'],0,2)) }}
+                <div class="opt-logo">
+                    @if(!empty($item['logo']))
+                        <img src="https://images.weserv.nl/?url={{ urlencode($item['logo']) }}" alt="{{ $item['name'] }}" referrerpolicy="no-referrer"
+                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                        <div class="opt-fallback" style="background:{{ $item['bg'] }}; display:none;">
+                            {{ $item['icon'] ?? strtoupper(substr($item['name'],0,2)) }}
+                        </div>
+                    @else
+                        <div class="opt-fallback" style="background:{{ $item['bg'] }};">
+                            {{ $item['icon'] ?? strtoupper(substr($item['name'],0,2)) }}
+                        </div>
+                    @endif
                 </div>
                 <div class="opt-name">{{ $item['name'] }}</div>
             </div>
@@ -329,7 +365,6 @@
         <p>Tidak ada hasil untuk pencarian ini.</p>
     </div>
 
-    <!-- Add Form -->
     <div class="add-form-panel" id="addFormPanel" style="display:none;">
         <h3>
             <span style="width:28px;height:28px;border-radius:8px;background:rgba(139,92,246,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">

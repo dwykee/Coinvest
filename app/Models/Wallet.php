@@ -18,11 +18,13 @@ class Wallet extends Model
         'api_secret',
         'last_synced_at',
         'total_value',
+        'balances',
     ];
 
     protected $casts = [
         'last_synced_at' => 'datetime',
         'total_value'    => 'float',
+        'balances'       => 'array',
     ];
 
     public function user(): BelongsTo
