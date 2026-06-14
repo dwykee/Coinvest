@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Wallet;
 use App\Services\MoralisService;
 
@@ -121,6 +122,69 @@ class WalletController extends Controller
 
         return redirect()->route('wallets.index')
             ->with('error', 'Sync belum tersedia untuk tipe ini.');
+    }
+
+    // GET /wallets/{id}/edit
+    public function edit($id)
+    {
+        $wallet = Wallet::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        return view('wallets.edit', compact('wallet'));
+    }
+
+    // PUT/PATCH /wallets/{id}
+    public function update(Request $request, $id)
+    {
+        $wallet = Wallet::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $data = [
+            'name' => $request->name,
+        ];
+
+        // Handle profile picture upload
+        if ($request->hasFile('profile_picture')) {
+            // Delete old picture if exists
+            if ($wallet->profile_picture && Storage::disk('public')->exists($wallet->profile_picture)) {
+                Storage::disk('public')->delete($wallet->profile_picture);
+            }
+
+            // Store new picture
+            $path = $request->file('profile_picture')->store('wallets', 'public');
+            $data['profile_picture'] = $path;
+        }
+
+        $wallet->update($data);
+
+        return redirect()->route('wallets.index')
+            ->with('success', 'Wallet "' . $wallet->name . '" berhasil diperbarui!');
+    }
+
+    // DELETE /wallets/{id}/photo
+    public function deletePhoto($id)
+    {
+        $wallet = Wallet::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        if ($wallet->profile_picture && Storage::disk('public')->exists($wallet->profile_picture)) {
+            Storage::disk('public')->delete($wallet->profile_picture);
+            $wallet->update(['profile_picture' => null]);
+
+            return redirect()->route('wallets.edit', $id)
+                ->with('success', 'Profile picture berhasil dihapus!');
+        }
+
+        return redirect()->route('wallets.edit', $id)
+            ->with('error', 'Tidak ada profile picture untuk dihapus.');
     }
 
     // DELETE /wallets/{id}

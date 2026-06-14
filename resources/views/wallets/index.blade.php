@@ -330,7 +330,9 @@
     <div class="wallet-card" data-name="{{ strtolower($wallet->name) }}">
         <div class="wallet-card-left">
             <div class="wallet-logo">
-                @if(!empty($wallet->logo_url))
+                @if($wallet->profile_picture && \Illuminate\Support\Facades\Storage::disk('public')->exists($wallet->profile_picture))
+                    <img src="{{ asset('storage/' . $wallet->profile_picture) }}" alt="{{ $wallet->name }}" style="width:100%;height:100%;object-fit:cover;">
+                @elseif(!empty($wallet->logo_url))
                     <img src="{{ $wallet->logo_url }}" alt="{{ $wallet->name }}">
                 @else
                     <span class="wallet-logo-fallback">{{ strtoupper(substr($wallet->name, 0, 2)) }}</span>
@@ -374,6 +376,12 @@
                 <div x-show="open" @click.away="open = false" x-transition
                      class="absolute right-0 mt-1 w-44 rounded-xl border border-white/10 shadow-2xl p-1 z-30"
                      style="background:#121114;display:none;">
+
+                    {{-- Edit --}}
+                    <a href="{{ route('wallets.edit', $wallet->id) }}" 
+                       class="w-full text-left px-3 py-2 text-sm text-on-surface-variant hover:bg-white/5 hover:text-white rounded-lg transition-colors flex items-center gap-2 block">
+                        <span class="material-symbols-outlined" style="font-size:14px;">edit</span> Edit
+                    </a>
 
                     {{-- Sync --}}
                     <form method="POST" action="{{ route('wallets.sync', $wallet->id) }}">

@@ -3,111 +3,209 @@
 @section('title', 'Pasar Live')
 
 @section('content')
+<style>
+    .price-up   { color: #10B981; }
+    .price-down { color: #EF4444; }
+
+    /* Flash animation saat harga update */
+    @keyframes flashGreen {
+        0%   { background: rgba(16,185,129,0.15); }
+        100% { background: transparent; }
+    }
+    @keyframes flashRed {
+        0%   { background: rgba(239,68,68,0.15); }
+        100% { background: transparent; }
+    }
+    .flash-up   { animation: flashGreen 0.8s ease-out; }
+    .flash-down { animation: flashRed 0.8s ease-out; }
+
+    .coin-row { transition: background 0.15s; }
+    .coin-row:hover { background: rgba(255,255,255,0.015); }
+
+    .coin-logo {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: contain;
+        background: rgba(255,255,255,0.05);
+        flex-shrink: 0;
+    }
+    .coin-logo-fallback {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(139,92,246,0.15);
+        border: 1px solid rgba(139,92,246,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 800;
+        color: #8b5cf6;
+        font-family: 'Sora', sans-serif;
+        flex-shrink: 0;
+    }
+
+    .change-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid;
+    }
+    .change-up   { color: #10B981; background: rgba(16,185,129,0.08);  border-color: rgba(16,185,129,0.2); }
+    .change-down { color: #EF4444; background: rgba(239,68,68,0.08);   border-color: rgba(239,68,68,0.2); }
+
+    .last-update {
+        font-size: 11px;
+        color: #4d4757;
+        margin-top: 2px;
+    }
+
+    /* Countdown ring */
+    .refresh-ring {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        background: #10B981;
+        box-shadow: 0 0 6px rgba(16,185,129,0.7);
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+    .refresh-ring.loading {
+        background: #f59e0b;
+        box-shadow: 0 0 6px rgba(245,158,11,0.7);
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+</style>
+
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
     <div>
-        <h1 class="text-3xl font-bold text-white font-heading">Pasar Crypto Real-Time</h1>
-        <p class="text-on-surface-variant text-sm mt-1">Pantau pergerakan harga aset crypto utama secara langsung.</p>
+        <h1 class="font-heading" style="font-size:26px;font-weight:800;color:#f5f3f7;letter-spacing:-0.5px;">
+            Pasar Crypto Real-Time
+        </h1>
+        <p style="font-size:13px;color:#7a7485;margin-top:4px;">
+            Pantau pergerakan harga aset crypto utama secara langsung.
+        </p>
     </div>
 </div>
 
-<div x-data="{
-    search: '',
-    modalOpen: false,
-    tradeType: 'buy',
-    tradeSymbol: 'BTC',
-    tradeName: 'Bitcoin',
-    tradePrice: 0.0,
-    tradeQuantity: '',
-    tradeDate: '{{ date('Y-m-d\TH:i') }}',
-    tradeNotes: '',
-    coins: [
-        @foreach($livePrices as $symbol => $info)
-        {
-            symbol: '{{ $symbol }}',
-            name: '{{ $info['name'] }}',
-            price: {{ $info['price'] }},
-            change: {{ $info['change'] }}
-        },
-        @endforeach
-    ],
-    filteredCoins() {
-        return this.coins.filter(c => 
-            c.symbol.toLowerCase().includes(this.search.toLowerCase()) || 
-            c.name.toLowerCase().includes(this.search.toLowerCase())
-        );
-    },
-    openTrade(type, symbol, name, price) {
-        this.tradeType = type;
-        this.tradeSymbol = symbol;
-        this.tradeName = name;
-        this.tradePrice = price;
-        this.tradeQuantity = '';
-        this.tradeNotes = '';
-        this.modalOpen = true;
-    }
-}">
-    <!-- Search Bar & Statistics -->
+<div x-data="marketApp()" x-init="init()">
+
+    <!-- Toolbar -->
     <div class="mb-6 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
-        <div class="relative max-w-md w-full">
-            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
-            <input type="text" x-model="search" placeholder="Cari nama koin atau simbol..." 
-                   class="w-full pl-11 pr-4 py-2.5 bg-surface-card border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors text-sm"/>
+        <div class="relative" style="max-width:360px;width:100%;">
+            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-size:18px;">search</span>
+            <input type="text" x-model="search" placeholder="Cari nama koin atau simbol..."
+                   style="width:100%;padding:10px 14px 10px 42px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:#f5f3f7;font-size:13px;outline:none;transition:border-color 0.2s;"
+                   onfocus="this.style.borderColor='rgba(139,92,246,0.5)'"
+                   onblur="this.style.borderColor='rgba(255,255,255,0.08)'"
+                   placeholder="Cari nama koin atau simbol...">
         </div>
-        <div class="flex items-center gap-2 text-xs text-on-surface-variant bg-white/[0.02] border border-white/5 px-4 py-2 rounded-xl">
-            <span class="inline-block w-2.5 h-2.5 rounded-full bg-success-green animate-pulse"></span>
-            Terkoneksi ke live Binance API ticker.
+        <div class="flex items-center gap-3">
+            <!-- Countdown -->
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#7a7485;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);padding:8px 14px;border-radius:10px;">
+                <div class="refresh-ring" :class="loading ? 'loading' : ''"></div>
+                <span x-show="!loading">Update dalam <strong x-text="countdown" style="color:#f5f3f7;"></strong>s</span>
+                <span x-show="loading" style="color:#f59e0b;">Memperbarui...</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#7a7485;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);padding:8px 14px;border-radius:10px;">
+                <span style="font-size:11px;" x-text="lastUpdate ? 'Update: ' + lastUpdate : 'Menunggu data...'"></span>
+            </div>
         </div>
     </div>
 
-    <!-- Ticker Table -->
-    <div class="glass-panel rounded-2xl p-6 shadow-lg overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+    <!-- Table -->
+    <div class="glass-panel rounded-2xl overflow-hidden shadow-lg">
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;">
                 <thead>
-                    <tr class="border-b border-white/5 text-xs text-on-surface-variant font-semibold">
-                        <th class="pb-3 w-12 text-center">Rank</th>
-                        <th class="pb-3">Koin</th>
-                        <th class="pb-3 text-right">Harga (USD)</th>
-                        <th class="pb-3 text-right">Perubahan 24h</th>
-                        <th class="pb-3 text-center w-48">Aksi</th>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                        <th style="padding:14px 20px;text-align:center;font-size:11px;font-weight:700;color:#4d4757;text-transform:uppercase;letter-spacing:0.8px;width:60px;">#</th>
+                        <th style="padding:14px 20px;text-align:left;font-size:11px;font-weight:700;color:#4d4757;text-transform:uppercase;letter-spacing:0.8px;">Koin</th>
+                        <th style="padding:14px 20px;text-align:right;font-size:11px;font-weight:700;color:#4d4757;text-transform:uppercase;letter-spacing:0.8px;">Harga (USD)</th>
+                        <th style="padding:14px 20px;text-align:right;font-size:11px;font-weight:700;color:#4d4757;text-transform:uppercase;letter-spacing:0.8px;">24h</th>
+                        <th style="padding:14px 20px;text-align:right;font-size:11px;font-weight:700;color:#4d4757;text-transform:uppercase;letter-spacing:0.8px;">Market Cap</th>
+                        <th style="padding:14px 20px;text-align:center;font-size:11px;font-weight:700;color:#4d4757;text-transform:uppercase;letter-spacing:0.8px;width:180px;">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-white/5 text-sm">
+                <tbody>
                     <template x-for="(coin, index) in filteredCoins()" :key="coin.symbol">
-                        <tr class="hover:bg-white/[0.01] transition-colors">
-                            <td class="py-4 text-center text-on-surface-variant text-xs font-semibold" x-text="index + 1"></td>
-                            <td class="py-4 flex items-center gap-3">
-                                <span class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase" x-text="coin.symbol.substring(0,2)"></span>
-                                <div>
-                                    <span class="font-bold text-white block" x-text="coin.symbol"></span>
-                                    <span class="text-xs text-on-surface-variant" x-text="coin.name"></span>
+                        <tr class="coin-row" :id="'row-' + coin.symbol" style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                            <!-- Rank -->
+                            <td style="padding:14px 20px;text-align:center;font-size:12px;font-weight:600;color:#4d4757;" x-text="index + 1"></td>
+
+                            <!-- Coin -->
+                            <td style="padding:14px 20px;">
+                                <div style="display:flex;align-items:center;gap:12px;">
+                                    <!-- Logo -->
+                                    <template x-if="coin.logo">
+                                        <img :src="coin.logo" :alt="coin.symbol" class="coin-logo"
+                                             @error="$el.style.display='none'; $el.nextElementSibling.style.display='flex'">
+                                    </template>
+                                    <div class="coin-logo-fallback" :style="coin.logo ? 'display:none' : 'display:flex'" x-text="coin.symbol.substring(0,2)"></div>
+
+                                    <div>
+                                        <div style="font-size:14px;font-weight:700;color:#f5f3f7;font-family:'Sora',sans-serif;" x-text="coin.symbol"></div>
+                                        <div style="font-size:11px;color:#7a7485;margin-top:1px;" x-text="coin.name"></div>
+                                    </div>
                                 </div>
                             </td>
-                            <td class="py-4 text-right font-bold text-white" x-text="'$' + coin.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })"></td>
-                            <td class="py-4 text-right">
-                                <span :class="coin.change >= 0 ? 'text-success-green bg-success-green/10 border-success-green/20' : 'text-error-red bg-error-red/10 border-error-red/20'" 
-                                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border">
-                                    <span class="material-symbols-outlined text-xs" x-text="coin.change >= 0 ? 'arrow_upward' : 'arrow_downward'"></span>
-                                    <span x-text="coin.change.toFixed(2) + '%'"></span>
+
+                            <!-- Price -->
+                            <td style="padding:14px 20px;text-align:right;">
+                                <span style="font-size:14px;font-weight:700;color:#f5f3f7;font-family:'Sora',sans-serif;"
+                                      x-text="'$' + coin.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: coin.price < 1 ? 6 : 2 })">
                                 </span>
                             </td>
-                            <td class="py-4">
-                                <div class="flex justify-center gap-2">
-                                    <button @click="openTrade('buy', coin.symbol, coin.name, coin.price)" 
-                                            class="px-3.5 py-1.5 bg-success-green/10 hover:bg-success-green hover:text-white text-success-green rounded-lg text-xs font-bold border border-success-green/20 transition-all flex items-center gap-1">
-                                        <span class="material-symbols-outlined text-xs">add_shopping_cart</span> Beli
+
+                            <!-- Change -->
+                            <td style="padding:14px 20px;text-align:right;">
+                                <span class="change-badge" :class="coin.change >= 0 ? 'change-up' : 'change-down'">
+                                    <span class="material-symbols-outlined" style="font-size:11px;" x-text="coin.change >= 0 ? 'arrow_upward' : 'arrow_downward'"></span>
+                                    <span x-text="Math.abs(coin.change).toFixed(2) + '%'"></span>
+                                </span>
+                            </td>
+
+                            <!-- Market Cap -->
+                            <td style="padding:14px 20px;text-align:right;font-size:12px;color:#a19baf;font-weight:600;">
+                                <span x-text="coin.market_cap ? '$' + formatMarketCap(coin.market_cap) : '—'"></span>
+                            </td>
+
+                            <!-- Actions -->
+                            <td style="padding:14px 20px;">
+                                <div style="display:flex;justify-content:center;gap:8px;">
+                                    <button @click="openTrade('buy', coin.symbol, coin.name, coin.price)"
+                                            style="padding:6px 14px;background:rgba(16,185,129,0.08);color:#10B981;border:1px solid rgba(16,185,129,0.2);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.15s;"
+                                            onmouseover="this.style.background='#10B981';this.style.color='#fff'"
+                                            onmouseout="this.style.background='rgba(16,185,129,0.08)';this.style.color='#10B981'">
+                                        <span class="material-symbols-outlined" style="font-size:13px;">add_shopping_cart</span> Beli
                                     </button>
-                                    <button @click="openTrade('sell', coin.symbol, coin.name, coin.price)" 
-                                            class="px-3.5 py-1.5 bg-error-red/10 hover:bg-error-red hover:text-white text-error-red rounded-lg text-xs font-bold border border-error-red/20 transition-all flex items-center gap-1">
-                                        <span class="material-symbols-outlined text-xs">sell</span> Jual
+                                    <button @click="openTrade('sell', coin.symbol, coin.name, coin.price)"
+                                            style="padding:6px 14px;background:rgba(239,68,68,0.08);color:#EF4444;border:1px solid rgba(239,68,68,0.2);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.15s;"
+                                            onmouseover="this.style.background='#EF4444';this.style.color='#fff'"
+                                            onmouseout="this.style.background='rgba(239,68,68,0.08)';this.style.color='#EF4444'">
+                                        <span class="material-symbols-outlined" style="font-size:13px;">sell</span> Jual
                                     </button>
                                 </div>
                             </td>
                         </tr>
                     </template>
-                    <tr x-show="filteredCoins().length === 0">
-                        <td colspan="5" class="py-12 text-center text-on-surface-variant text-sm">
-                            Tidak ada koin yang cocok dengan pencarian Anda.
+
+                    <!-- Empty state -->
+                    <tr x-show="filteredCoins().length === 0 && !loading">
+                        <td colspan="6" style="padding:48px;text-align:center;color:#4d4757;font-size:13px;">
+                            <span class="material-symbols-outlined" style="font-size:32px;display:block;margin-bottom:8px;opacity:0.3;">search_off</span>
+                            Tidak ada koin yang cocok.
                         </td>
                     </tr>
                 </tbody>
@@ -116,80 +214,84 @@
     </div>
 
     <!-- Quick Trade Modal -->
-    <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm" style="display: none;" x-transition>
-        <div @click.away="modalOpen = false" class="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
-            <button @click="modalOpen = false" class="absolute top-4 right-4 text-on-surface-variant hover:text-white transition-colors">
-                <span class="material-symbols-outlined text-lg">close</span>
+    <div x-show="modalOpen" style="display:none;"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         style="background:rgba(10,10,11,0.85);backdrop-filter:blur(8px);"
+         x-transition>
+        <div @click.away="modalOpen = false"
+             class="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
+            <button @click="modalOpen = false"
+                    style="position:absolute;top:16px;right:16px;background:none;border:none;color:#7a7485;cursor:pointer;transition:color 0.15s;"
+                    onmouseover="this.style.color='#f5f3f7'" onmouseout="this.style.color='#7a7485'">
+                <span class="material-symbols-outlined">close</span>
             </button>
 
-            <!-- Modal Title -->
-            <h3 class="text-lg font-bold text-white font-heading mb-6 flex items-center gap-2">
-                <span class="material-symbols-outlined" :class="tradeType === 'buy' ? 'text-success-green' : 'text-error-red'" x-text="tradeType === 'buy' ? 'add_shopping_cart' : 'sell'"></span>
-                Quick <span x-text="tradeType === 'buy' ? 'Beli' : 'Jual'"></span> <span x-text="tradeSymbol"></span>
+            <h3 class="font-heading" style="font-size:17px;font-weight:700;color:#f5f3f7;margin-bottom:22px;display:flex;align-items:center;gap:8px;">
+                <span class="material-symbols-outlined"
+                      :style="tradeType === 'buy' ? 'color:#10B981' : 'color:#EF4444'"
+                      x-text="tradeType === 'buy' ? 'add_shopping_cart' : 'sell'"></span>
+                Quick <span x-text="tradeType === 'buy' ? 'Beli' : 'Jual'" style="margin-left:4px;"></span>&nbsp;<span x-text="tradeSymbol"></span>
             </h3>
 
-            <form method="POST" action="{{ route('transactions.store') }}" class="space-y-4">
+            <form method="POST" action="{{ route('transactions.store') }}" style="display:flex;flex-direction:column;gap:14px;">
                 @csrf
                 <input type="hidden" name="type" :value="tradeType">
                 <input type="hidden" name="asset_symbol" :value="tradeSymbol">
 
-                <!-- Asset Symbol & Name Info -->
-                <div class="bg-white/[0.02] border border-white/5 rounded-xl p-4 flex justify-between items-center text-sm">
+                <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;">
                     <div>
-                        <span class="text-white font-bold block" x-text="tradeName"></span>
-                        <span class="text-xs text-on-surface-variant" x-text="'Harga pasar: $' + tradePrice.toLocaleString('en-US')"></span>
+                        <div style="font-size:14px;font-weight:700;color:#f5f3f7;" x-text="tradeName"></div>
+                        <div style="font-size:11px;color:#7a7485;margin-top:2px;" x-text="'Harga pasar: $' + tradePrice.toLocaleString('en-US', {minimumFractionDigits:2})"></div>
                     </div>
-                    <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase" :class="tradeType === 'buy' ? 'bg-success-green/10 text-success-green border border-success-green/20' : 'bg-error-red/10 text-error-red border border-error-red/20'" x-text="tradeType === 'buy' ? 'BELI' : 'JUAL'"></span>
+                    <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:0.5px;"
+                          :style="tradeType === 'buy' ? 'background:rgba(16,185,129,0.1);color:#10B981;border:1px solid rgba(16,185,129,0.2)' : 'background:rgba(239,68,68,0.1);color:#EF4444;border:1px solid rgba(239,68,68,0.2)'"
+                          x-text="tradeType === 'buy' ? 'BELI' : 'JUAL'"></span>
                 </div>
 
-                <!-- Quantity -->
                 <div>
-                    <label for="modal_quantity" class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Jumlah Koin</label>
-                    <div class="relative">
-                        <input id="modal_quantity" type="number" step="any" min="0.00000001" name="quantity" x-model="tradeQuantity" required placeholder="0.000"
-                               class="w-full px-4 py-3 bg-surface-dim border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors text-sm"/>
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-primary" x-text="tradeSymbol"></span>
-                    </div>
-                </div>
-
-                <!-- Price USD (Prefilled and editable) -->
-                <div>
-                    <label for="modal_price_usd" class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Harga Transaksi (USD/Koin)</label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-on-surface-variant">$</span>
-                        <input id="modal_price_usd" type="number" step="any" min="0.00000001" name="price_usd" x-model="tradePrice" required 
-                               class="w-full pl-8 pr-4 py-3 bg-surface-dim border border-white/10 rounded-xl text-white focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors text-sm"/>
+                    <label style="font-size:11px;font-weight:700;color:#7a7485;text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:6px;">Jumlah Koin</label>
+                    <div style="position:relative;">
+                        <input type="number" step="any" min="0.00000001" name="quantity" x-model="tradeQuantity" required placeholder="0.000"
+                               style="width:100%;padding:11px 50px 11px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f5f3f7;font-size:14px;outline:none;box-sizing:border-box;">
+                        <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:#8b5cf6;" x-text="tradeSymbol"></span>
                     </div>
                 </div>
 
-                <!-- Total Value Preview -->
-                <div class="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-xs flex justify-between items-center">
-                    <span class="text-on-surface-variant">Estimasi Total Transaksi:</span>
-                    <span class="text-white font-bold" x-text="tradePrice && tradeQuantity ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(tradePrice * tradeQuantity) : '$0.00'"></span>
-                </div>
-
-                <!-- Transaction Date -->
                 <div>
-                    <label for="modal_date" class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Waktu Transaksi</label>
-                    <input id="modal_date" type="datetime-local" name="transaction_date" required x-model="tradeDate"
-                           class="w-full px-4 py-3 bg-surface-dim border border-white/10 rounded-xl text-white focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors text-sm"/>
+                    <label style="font-size:11px;font-weight:700;color:#7a7485;text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:6px;">Harga (USD/Koin)</label>
+                    <div style="position:relative;">
+                        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:12px;color:#7a7485;">$</span>
+                        <input type="number" step="any" name="price_usd" x-model="tradePrice" required
+                               style="width:100%;padding:11px 14px 11px 28px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f5f3f7;font-size:14px;outline:none;box-sizing:border-box;">
+                    </div>
                 </div>
 
-                <!-- Notes -->
+                <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:12px;display:flex;justify-content:space-between;font-size:12px;">
+                    <span style="color:#7a7485;">Estimasi Total:</span>
+                    <span style="color:#f5f3f7;font-weight:700;" x-text="tradePrice && tradeQuantity ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(tradePrice * tradeQuantity) : '$0.00'"></span>
+                </div>
+
                 <div>
-                    <label for="modal_notes" class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Catatan</label>
-                    <textarea id="modal_notes" name="notes" rows="2" placeholder="Contoh: Beli lewat Quick Trade Pasar" x-model="tradeNotes"
-                              class="w-full px-4 py-3 bg-surface-dim border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors text-sm resize-none"></textarea>
+                    <label style="font-size:11px;font-weight:700;color:#7a7485;text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:6px;">Tanggal Transaksi</label>
+                    <input type="datetime-local" name="transaction_date" required x-model="tradeDate"
+                           style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f5f3f7;font-size:14px;outline:none;box-sizing:border-box;">
                 </div>
 
-                <!-- Submit -->
-                <div class="grid grid-cols-2 gap-3 mt-4">
-                    <button type="button" @click="modalOpen = false" class="py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/5 text-sm font-semibold transition-colors text-center">
+                <div>
+                    <label style="font-size:11px;font-weight:700;color:#7a7485;text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:6px;">Catatan</label>
+                    <textarea name="notes" rows="2" placeholder="Opsional..." x-model="tradeNotes"
+                              style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f5f3f7;font-size:14px;outline:none;resize:none;box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif;"></textarea>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;">
+                    <button type="button" @click="modalOpen = false"
+                            style="padding:12px;background:rgba(255,255,255,0.04);color:#a19baf;border:1px solid rgba(255,255,255,0.08);border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;">
                         Batal
                     </button>
-                    <button type="submit" :class="tradeType === 'buy' ? 'btn-primary' : 'bg-error-red hover:bg-red-600'" 
-                            class="py-3 text-white rounded-xl text-sm font-semibold transition-colors text-center flex items-center justify-center gap-1 shadow-lg">
-                        <span class="material-symbols-outlined text-sm">check</span>
+                    <button type="submit"
+                            :style="tradeType === 'buy' ? 'background:linear-gradient(180deg,#34d399,#10B981)' : 'background:linear-gradient(180deg,#f87171,#EF4444)'"
+                            style="padding:12px;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:15px;">check</span>
                         Simpan Transaksi
                     </button>
                 </div>
@@ -197,4 +299,133 @@
         </div>
     </div>
 </div>
+
+<script>
+// CoinGecko ID mapping
+const COINGECKO_IDS = {
+    BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', BNB: 'binancecoin',
+    XRP: 'ripple', ADA: 'cardano', DOGE: 'dogecoin', DOT: 'polkadot',
+    AVAX: 'avalanche-2', LINK: 'chainlink', MATIC: 'matic-network',
+    UNI: 'uniswap', ATOM: 'cosmos', LTC: 'litecoin', TRX: 'tron',
+};
+
+// CoinGecko logo cache
+const LOGO_CACHE = {};
+
+function marketApp() {
+    return {
+        search: '',
+        modalOpen: false,
+        tradeType: 'buy',
+        tradeSymbol: 'BTC',
+        tradeName: 'Bitcoin',
+        tradePrice: 0.0,
+        tradeQuantity: '',
+        tradeDate: '{{ date('Y-m-d\TH:i') }}',
+        tradeNotes: '',
+        loading: false,
+        countdown: 30,
+        lastUpdate: null,
+        coins: @php echo json_encode(array_values(array_map(function($sym, $info) {
+            return ['symbol'=>$sym,'name'=>$info['name'],'price'=>$info['price'],'change'=>$info['change'],'market_cap'=>0,'logo'=>null];
+        }, array_keys($livePrices), array_values($livePrices)))); @endphp,
+
+        init() {
+            this.fetchLogos();
+            this.startCountdown();
+        },
+
+        filteredCoins() {
+            const q = this.search.toLowerCase();
+            return this.coins.filter(c =>
+                c.symbol.toLowerCase().includes(q) ||
+                c.name.toLowerCase().includes(q)
+            );
+        },
+
+        formatMarketCap(val) {
+            if (val >= 1e12) return (val / 1e12).toFixed(2) + 'T';
+            if (val >= 1e9)  return (val / 1e9).toFixed(2) + 'B';
+            if (val >= 1e6)  return (val / 1e6).toFixed(2) + 'M';
+            return val.toLocaleString();
+        },
+
+        async fetchLogos() {
+            const ids = this.coins
+                .map(c => COINGECKO_IDS[c.symbol])
+                .filter(Boolean)
+                .join(',');
+            if (!ids) return;
+            try {
+                const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&per_page=50&sparkline=false`, {
+                    headers: { 'x-cg-demo-api-key': '{{ config('services.coingecko.key') }}' }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                data.forEach(coin => {
+                    const symbol = coin.symbol.toUpperCase();
+                    const idx = this.coins.findIndex(c => c.symbol === symbol);
+                    if (idx !== -1) {
+                        this.coins[idx].logo       = coin.image;
+                        this.coins[idx].market_cap = coin.market_cap ?? 0;
+                    }
+                });
+            } catch(e) { /* silent */ }
+        },
+
+        async fetchPrices() {
+            this.loading = true;
+            try {
+                const res = await fetch('{{ route('market.prices') }}');
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+
+                data.forEach(updated => {
+                    const idx = this.coins.findIndex(c => c.symbol === updated.symbol);
+                    if (idx === -1) return;
+
+                    const old = this.coins[idx].price;
+                    this.coins[idx].price  = updated.price;
+                    this.coins[idx].change = updated.change;
+
+                    // Flash row
+                    this.$nextTick(() => {
+                        const row = document.getElementById('row-' + updated.symbol);
+                        if (!row) return;
+                        row.classList.remove('flash-up','flash-down');
+                        void row.offsetWidth;
+                        if (updated.price > old)      row.classList.add('flash-up');
+                        else if (updated.price < old) row.classList.add('flash-down');
+                    });
+                });
+
+                const now = new Date();
+                this.lastUpdate = now.toLocaleTimeString('id-ID');
+            } catch(e) { /* silent */ }
+            finally { this.loading = false; }
+        },
+
+        startCountdown() {
+            this.countdown = 30;
+            setInterval(() => {
+                this.countdown--;
+                if (this.countdown <= 0) {
+                    this.countdown = 30;
+                    this.fetchPrices();
+                }
+            }, 1000);
+        },
+
+        openTrade(type, symbol, name, price) {
+            this.tradeType     = type;
+            this.tradeSymbol   = symbol;
+            this.tradeName     = name;
+            this.tradePrice    = price;
+            this.tradeQuantity = '';
+            this.tradeNotes    = '';
+            this.modalOpen     = true;
+        }
+    }
+}
+</script>
 @endsection

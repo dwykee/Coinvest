@@ -19,6 +19,16 @@ return [
         'key' => env('MORALIS_API_KEY'),
     ],
 
+    'coingecko' => [
+        'key' => env('COINGECKO_API_KEY'),
+    ],
+
+    'google' => [
+    'client_id' => env('GOOGLE_CLIENT_ID'),
+    'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+    'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
