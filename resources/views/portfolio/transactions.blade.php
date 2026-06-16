@@ -10,22 +10,7 @@
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8" x-data="{
-    prices: {{ json_encode(array_map(fn($item) => $item['price'], $livePrices)) }},
-    selectedSymbol: 'BTC',
-    quantity: '',
-    price: '',
-    type: 'buy',
-    updatePrice() {
-        if(this.prices[this.selectedSymbol]) {
-            this.price = this.prices[this.selectedSymbol];
-        }
-    },
-    init() {
-        this.$watch('selectedSymbol', () => this.updatePrice());
-        this.updatePrice();
-    }
-}">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8" x-data="transactionForm()">
     <!-- Add Transaction Column -->
     <div class="lg:col-span-1">
         <div class="glass-panel rounded-2xl p-6 shadow-lg sticky top-28">
@@ -85,11 +70,13 @@
                             <input id="price_usd" type="number" step="any" min="0.00000001" name="price_usd" x-model="price" required placeholder="Contoh: 68500"
                                    class="w-full pl-8 pr-4 py-3 bg-surface-dim border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors text-sm"/>
                         </div>
-                        <button type="button" @click="updatePrice()" 
-                                class="px-3.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1 shrink-0" 
-                                title="Gunakan harga pasar sekarang">
-                            <span class="material-symbols-outlined text-sm">sync</span>
-                            Live Price
+                        <button type="button"
+                                @click="fetchLivePrice()"
+                                :disabled="loadingPrice"
+                                class="px-3.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Ambil harga pasar sekarang">
+                            <span class="material-symbols-outlined text-sm" x-text="loadingPrice ? 'hourglass_top' : 'sync'"></span>
+                            <span x-text="loadingPrice ? 'Loading...' : 'Live Price'"></span>
                         </button>
                     </div>
                 </div>
@@ -200,4 +187,70 @@
         </div>
     </div>
 </div>
+
+<script>
+function transactionForm() {
+    return {
+        prices: @json(collect($livePrices)->mapWithKeys(fn($info, $symbol) => [$symbol => $info['price']])),
+        selectedSymbol: 'BTC',
+        quantity: '',
+        price: '',
+        type: 'buy',
+        loadingPrice: false,
+
+        updatePrice() {
+            if (this.prices[this.selectedSymbol]) {
+                this.price = this.prices[this.selectedSymbol];
+            }
+        },
+
+        async fetchLivePrice() {
+            if (!this.selectedSymbol) {
+                alert('Pilih koin dulu.');
+                return;
+            }
+
+            this.loadingPrice = true;
+
+            try {
+                const response = await fetch('/market/prices?t=' + Date.now(), {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    cache: 'no-store'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Gagal ambil live price');
+                }
+
+                const data = await response.json();
+
+                const coin = data.find(item => item.symbol === this.selectedSymbol);
+
+                if (!coin) {
+                    alert('Harga live untuk ' + this.selectedSymbol + ' tidak ditemukan.');
+                    return;
+                }
+
+                this.price = parseFloat(Number(coin.price).toFixed(8));
+                this.prices[this.selectedSymbol] = Number(coin.price);
+
+            } catch (error) {
+                console.error(error);
+                alert('Gagal mengambil live price. Cek route /market/prices atau API CoinGecko.');
+            } finally {
+                this.loadingPrice = false;
+            }
+        },
+
+        init() {
+            this.$watch('selectedSymbol', () => this.updatePrice());
+            this.updatePrice();
+        }
+    }
+}
+</script>
 @endsection

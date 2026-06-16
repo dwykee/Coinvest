@@ -20,11 +20,54 @@ class WalletController extends Controller
     // GET /wallets
     public function index()
     {
+        $livePrices = PortfolioController::getLivePrices();
+
         $wallets = Wallet::where('user_id', Auth::id())
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($wallet) use ($livePrices) {
+                $balancesArray = $wallet->balances;
 
-        return view('wallets.index', compact('wallets'));
+                if (is_string($balancesArray)) {
+                    $balancesArray = json_decode($balancesArray, true);
+                }
+
+                $liveTotalValue = 0.0;
+                $hasBalances = false;
+
+                foreach (($balancesArray ?? []) as $bal) {
+                    $symbol = strtoupper($bal['symbol'] ?? $bal['token_symbol'] ?? '');
+                    $amount = (float) ($bal['amount'] ?? $bal['balance'] ?? 0);
+
+                    if ($symbol === '' || $amount <= 0) {
+                        continue;
+                    }
+
+                    $hasBalances = true;
+
+                    $priceSymbol = match ($symbol) {
+                        'WETH'   => 'ETH',
+                        'WBTC'   => 'BTC',
+                        'WMATIC' => 'MATIC',
+                        default  => $symbol,
+                    };
+
+                    $livePrice = $livePrices[$priceSymbol]['price'] ?? 0.0;
+
+                    if ($livePrice > 0) {
+                        $liveTotalValue += $amount * $livePrice;
+                    }
+                }
+
+                if ($hasBalances) {
+                    // Override hanya untuk tampilan, tidak save ke database
+                    $wallet->total_value = $liveTotalValue;
+                }
+
+                return $wallet;
+            });
+
+        return view('wallets.index', compact('wallets', 'livePrices'));
     }
 
     // GET /wallets/select
