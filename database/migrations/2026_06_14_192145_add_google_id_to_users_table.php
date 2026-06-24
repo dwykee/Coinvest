@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             if (!Schema::hasColumn('users', 'google_id')) {
-            $table->string('google_id')->nullable()->after('email');
-    }
-});
+                $table->string('google_id')->nullable()->after('email');
+            }
+        });
     }
 
     public function down(): void
