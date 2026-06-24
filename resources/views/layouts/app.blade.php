@@ -93,8 +93,12 @@
         <div class="container flex justify-between items-center h-20">
             <!-- Brand -->
             <a href="{{ route('landing') }}" class="font-heading text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                <span class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white">
-                    <span class="material-symbols-outlined text-xl">data_usage</span>
+                <span class="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-[0_2px_10px_rgba(245,158,11,0.3)]">
+                    <svg viewBox="0 0 100 100" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none">
+                        <defs><linearGradient id="coinvestLgApp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FDE047"/><stop offset="1" stop-color="#F59E0B"/></linearGradient></defs>
+                        <circle cx="50" cy="50" r="34" stroke="url(#coinvestLgApp)" stroke-width="14" stroke-linecap="round" stroke-dasharray="168.5 45.1" transform="rotate(38 50 50)"/>
+                        <path d="M38 60 L62 40 M62 40 L52 40 M62 40 L62 50" stroke="url(#coinvestLgApp)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </span>
                 Coinvest
             </a>
@@ -186,8 +190,12 @@
     <footer class="w-full py-8 border-t border-white/5 bg-background mt-auto relative z-10">
         <div class="container flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-2">
-                <span class="w-6 h-6 rounded bg-primary flex items-center justify-center text-white">
-                    <span class="material-symbols-outlined text-sm">data_usage</span>
+                <span class="w-6 h-6 rounded bg-white flex items-center justify-center shadow-[0_2px_8px_rgba(245,158,11,0.25)]">
+                    <svg viewBox="0 0 100 100" class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none">
+                        <defs><linearGradient id="coinvestLgAppFooter" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FDE047"/><stop offset="1" stop-color="#F59E0B"/></linearGradient></defs>
+                        <circle cx="50" cy="50" r="34" stroke="url(#coinvestLgAppFooter)" stroke-width="14" stroke-linecap="round" stroke-dasharray="168.5 45.1" transform="rotate(38 50 50)"/>
+                        <path d="M38 60 L62 40 M62 40 L52 40 M62 40 L62 50" stroke="url(#coinvestLgAppFooter)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </span>
                 <span class="font-heading text-base font-bold tracking-tight text-white">Coinvest</span>
             </div>

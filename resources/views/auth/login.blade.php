@@ -17,12 +17,12 @@
                         "on-surface-variant": "#a19baf",
                         "surface-variant": "#353534",
                         "on-surface": "#f5f3f7",
-                        "primary": "#8b5cf6",
+                        "primary": "#ffffff",
                         "surface-dim": "#0a0a0b",
                         "background": "#0a0a0b",
                         "surface-container-low": "#151416",
                         "on-background": "#f5f3f7",
-                        "primary-container": "#a078ff",
+                        "primary-container": "#e8e8ec",
                         "outline": "#7a7485",
                         "surface-container": "#1c1b1f",
                         "on-primary": "#ffffff",
@@ -61,7 +61,11 @@
             background-size: 32px 32px;
         }
         .btn-primary {
-            background: linear-gradient(180deg, #9f7aea 0%, #8b5cf6 100%);
+            background: #ffffff;
+            color: #0a0a0b !important;
+        }
+        .btn-primary:hover {
+            background: #e8e8ec;
         }
         .glass-panel {
             background: rgba(18, 17, 20, 0.7);
@@ -71,7 +75,7 @@
         }
     </style>
 </head>
-<body class="antialiased bg-background text-on-background selection:bg-primary/30 selection:text-white min-h-screen flex flex-col justify-center items-center py-12 relative overflow-hidden">
+<body class="antialiased bg-background text-on-background selection:bg-primary/30 selection:text-white min-h-screen flex flex-col justify-center items-center py-12 relative overflow-x-hidden">
     <div class="absolute inset-0 bg-grid-pattern opacity-40 z-0"></div>
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-primary/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
 
@@ -142,7 +146,7 @@
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="w-full btn-primary text-white font-medium py-3.5 rounded-xl shadow-[0_4px_14px_rgba(139,92,246,0.3)] hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm">
+                <button type="submit" class="w-full btn-primary text-white font-medium py-3.5 rounded-xl shadow-[0_4px_14px_rgba(255,255,255,0.12)] hover:shadow-[0_6px_20px_rgba(255,255,255,0.18)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm">
                     Masuk Sekarang
                 </button>
             </form>
@@ -179,7 +183,7 @@
         <!-- Toggle link -->
         <p class="text-center text-sm text-on-surface-variant mt-6">
             Belum punya akun? 
-            <a href="{{ route('register') }}" class="text-primary hover:text-purple-400 font-medium transition-colors">Daftar sekarang</a>
+            <a href="{{ route('register') }}" class="text-white hover:text-white/60 font-medium transition-colors">Daftar sekarang</a>
         </p>
     </div>
 </body>

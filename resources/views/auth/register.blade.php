@@ -17,12 +17,12 @@
                         "on-surface-variant": "#a19baf",
                         "surface-variant": "#353534",
                         "on-surface": "#f5f3f7",
-                        "primary": "#8b5cf6",
+                        "primary": "#ffffff",
                         "surface-dim": "#0a0a0b",
                         "background": "#0a0a0b",
                         "surface-container-low": "#151416",
                         "on-background": "#f5f3f7",
-                        "primary-container": "#a078ff",
+                        "primary-container": "#e8e8ec",
                         "outline": "#7a7485",
                         "surface-container": "#1c1b1f",
                         "on-primary": "#ffffff",
@@ -61,7 +61,11 @@
             background-size: 32px 32px;
         }
         .btn-primary {
-            background: linear-gradient(180deg, #9f7aea 0%, #8b5cf6 100%);
+            background: #ffffff;
+            color: #0a0a0b !important;
+        }
+        .btn-primary:hover {
+            background: #e8e8ec;
         }
         .glass-panel {
             background: rgba(18, 17, 20, 0.7);
@@ -172,7 +176,7 @@
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="w-full btn-primary text-white font-medium py-3.5 rounded-xl shadow-[0_4px_14px_rgba(139,92,246,0.3)] hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm mt-2">
+                <button type="submit" class="w-full btn-primary text-white font-medium py-3.5 rounded-xl shadow-[0_4px_14px_rgba(255,255,255,0.12)] hover:shadow-[0_6px_20px_rgba(255,255,255,0.18)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm mt-2">
                     Daftar Akun
                 </button>
             </form>
@@ -199,7 +203,7 @@
         <!-- Toggle link -->
         <p class="text-center text-sm text-on-surface-variant mt-6">
             Sudah punya akun? 
-            <a href="{{ route('login') }}" class="text-primary hover:text-purple-400 font-medium transition-colors">Masuk sekarang</a>
+            <a href="{{ route('login') }}" class="text-white hover:text-white/60 font-medium transition-colors">Masuk sekarang</a>
         </p>
     </div>
 </body>

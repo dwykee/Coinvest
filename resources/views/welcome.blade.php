@@ -111,6 +111,21 @@
             .container { padding-left: 2rem; padding-right: 2rem; }
         }
     </style>
+    <style>
+        .nav-link { position: relative; }
+        .nav-link::after {
+            content: "";
+            position: absolute;
+            bottom: -0.5rem;
+            left: 0;
+            height: 2px;
+            width: 0;
+            background: #ffffff;
+            transition: width 0.3s ease;
+        }
+        .nav-link.active::after { width: 100%; }
+        .nav-link.active { color: #ffffff !important; }
+    </style>
 </head>
 <body class="antialiased bg-background text-on-background selection:bg-primary/30 selection:text-white">
 <!-- TopNavBar Component -->
@@ -127,10 +142,10 @@
             Coinvest
         </div>
         <div class="hidden md:flex items-center space-x-10">
-            <a class="text-white font-medium text-sm tracking-wide transition-colors duration-200 relative after:absolute after:-bottom-2 after:left-0 after:w-full after:h-0.5 after:bg-primary" href="#">Home</a>
-            <a class="text-on-surface-variant hover:text-white font-medium text-sm tracking-wide transition-colors duration-200" href="#features">Fitur</a>
-            <a class="text-on-surface-variant hover:text-white font-medium text-sm tracking-wide transition-colors duration-200" href="#steps">Cara Kerja</a>
-            <a class="text-on-surface-variant hover:text-white font-medium text-sm tracking-wide transition-colors duration-200" href="#reports">Analisis</a>
+            <a class="nav-link text-on-surface-variant hover:text-white font-medium text-sm tracking-wide transition-colors duration-200" href="#home" data-target="home">Home</a>
+            <a class="nav-link text-on-surface-variant hover:text-white font-medium text-sm tracking-wide transition-colors duration-200" href="#features" data-target="features">Fitur</a>
+            <a class="nav-link text-on-surface-variant hover:text-white font-medium text-sm tracking-wide transition-colors duration-200" href="#steps" data-target="steps">Cara Kerja</a>
+            <a class="nav-link text-on-surface-variant hover:text-white font-medium text-sm tracking-wide transition-colors duration-200" href="#reports" data-target="reports">Analisis</a>
         </div>
         <div class="flex items-center space-x-5">
             @auth
@@ -145,7 +160,7 @@
 
 <main class="pt-20">
     <!-- Hero Section -->
-    <section class="relative pt-32 md:pt-48 pb-32 overflow-hidden">
+    <section id="home" class="relative pt-32 md:pt-48 pb-32 overflow-hidden">
         <div class="absolute inset-0 bg-grid-pattern opacity-60 z-0"></div>
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-primary/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
         <div class="container relative z-10 text-center">
@@ -385,5 +400,28 @@
         </div>
     </div>
 </footer>
+    <script>
+        (function () {
+            const links = Array.from(document.querySelectorAll('.nav-link'));
+            const sections = links
+                .map(l => document.getElementById(l.getAttribute('data-target')))
+                .filter(Boolean);
+            function setActive(id) {
+                links.forEach(l => l.classList.toggle('active', l.getAttribute('data-target') === id));
+            }
+            setActive('home');
+            if ('IntersectionObserver' in window) {
+                const obs = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (e) {
+                        if (e.isIntersecting) setActive(e.target.id);
+                    });
+                }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+                sections.forEach(s => obs.observe(s));
+            }
+            links.forEach(l => l.addEventListener('click', function () {
+                setActive(l.getAttribute('data-target'));
+            }));
+        })();
+    </script>
 </body>
 </html>
