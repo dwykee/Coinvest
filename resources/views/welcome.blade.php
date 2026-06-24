@@ -185,7 +185,7 @@
     </section>
 
     <!-- Value Prop -->
-    <section id="features" class="py-32">
+    <section id="features" class="py-32 md:px-32">
         <div class="container">
             <div class="grid md:grid-cols-2 gap-20 items-center">
                 <div>
