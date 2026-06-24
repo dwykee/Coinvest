@@ -71,7 +71,7 @@
         }
     </style>
 </head>
-<body class="antialiased bg-background text-on-background selection:bg-primary/30 selection:text-white min-h-screen flex flex-col justify-center items-center py-12 relative overflow-hidden">
+<body class="antialiased bg-background text-on-background selection:bg-primary/30 selection:text-white min-h-screen flex flex-col justify-center items-center py-12 relative overflow-x-hidden">
     <div class="absolute inset-0 bg-grid-pattern opacity-40 z-0"></div>
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-primary/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
 
@@ -85,8 +85,12 @@
         <!-- Logo -->
         <div class="text-center mb-8">
             <div class="font-heading text-3xl font-bold tracking-tight text-white flex items-center justify-center gap-3">
-                <span class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white">
-                    <span class="material-symbols-outlined text-2xl">data_usage</span>
+                <span class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-[0_2px_10px_rgba(245,158,11,0.3)]">
+                    <svg viewBox="0 0 100 100" class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none">
+                        <defs><linearGradient id="coinvestLgRegister" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FDE047"/><stop offset="1" stop-color="#F59E0B"/></linearGradient></defs>
+                        <circle cx="50" cy="50" r="34" stroke="url(#coinvestLgRegister)" stroke-width="14" stroke-linecap="round" stroke-dasharray="168.5 45.1" transform="rotate(38 50 50)"/>
+                        <path d="M38 60 L62 40 M62 40 L52 40 M62 40 L62 50" stroke="url(#coinvestLgRegister)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </span>
                 Coinvest
             </div>
@@ -97,7 +101,7 @@
         <div class="glass-panel rounded-2xl p-8 shadow-2xl">
                         <!-- Google Login -->
             <a href="{{ route('auth.google.redirect') }}"
-               class="w-full flex items-center justify-center gap-3 bg-white hover:bg-white/90 text-on-background font-medium py-3.5 rounded-xl shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm mb-6">
+               class="w-full flex items-center justify-center gap-3 bg-white hover:bg-white/90 text-black font-medium py-3.5 rounded-xl shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm mb-6">
                 <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
                     <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
                     <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
@@ -181,7 +185,7 @@
 
             <!-- Google Login -->
             <a href="{{ route('auth.google.redirect') }}"
-               class="w-full flex items-center justify-center gap-3 bg-white hover:bg-white/90 text-gray-700 font-medium py-3.5 rounded-xl shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm">
+               class="w-full flex items-center justify-center gap-3 bg-white hover:bg-white/90 text-black font-medium py-3.5 rounded-xl shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm">
                 <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
                     <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
                     <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
